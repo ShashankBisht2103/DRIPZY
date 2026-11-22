@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+function getDb() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Server Supabase environment variables are not configured.')
+  return createClient(url, key)
+}
 const bad = (m: string, s = 400) => Response.json({ error: m }, { status: s })
 
 export async function POST(req: Request) {
+  let db
+  try { db = getDb() } catch (error: any) { return bad(error.message, 500) }
   const token = (req.headers.get('authorization') ?? '').replace('Bearer ', '')
   const { data: { user } } = await db.auth.getUser(token)
   if (!user) return bad('Please log in.', 401)

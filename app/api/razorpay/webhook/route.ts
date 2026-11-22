@@ -2,9 +2,16 @@ import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 
 // Server-only. The service-role key and webhook secret never reach the browser.
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+function getDb() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Server Supabase environment variables are not configured.')
+  return createClient(url, key)
+}
 
 export async function POST(req: Request) {
+  let db
+  try { db = getDb() } catch (error: any) { return new Response(error.message, { status: 500 }) }
   const raw = await req.text() // signature is computed over the raw body
   const sig = req.headers.get('x-razorpay-signature') ?? ''
   const expected = crypto.createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!).update(raw).digest('hex')

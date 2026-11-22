@@ -16,7 +16,8 @@ export default async function Products({ searchParams }: { searchParams: { cat?:
   if (searchParams.q) { const t = searchParams.q.replace(/[%,()]/g, ''); q = q.or(`name.ilike.%${t}%,description.ilike.%${t}%,material.ilike.%${t}%`) }
   const s = searchParams.sort
   q = s === 'low' ? q.order('price') : s === 'high' ? q.order('price', { ascending: false }) : q.order('created_at', { ascending: false })
-  const { data: products } = await q
+  const { data, error } = await q
+  const products: any[] = !error && Array.isArray(data) ? data : []
   const base = (v: string) => `/products?${new URLSearchParams({ ...(searchParams.cat ? { cat: searchParams.cat } : {}), sort: v })}`
   return (<main className="max-w-6xl mx-auto px-4 py-10">
     <div className="flex justify-between items-end mb-8"><h1 className="font-display text-4xl uppercase">{title}</h1>
