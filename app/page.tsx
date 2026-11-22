@@ -1,10 +1,11 @@
-import { supabase } from '@/lib/supabase'
+import { hasSupabaseConfig, supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import Link from 'next/link'
 import { Hero, Banner, BANNER_TYPES } from '@/components/Sections'
 
 const sel = '*, product_images(url, sort_order)'
 async function row(flag: string) {
+  if (!hasSupabaseConfig) return []
   const { data } = await supabase.from('products').select(sel).eq('is_active', true).eq(flag, true).limit(8)
   return data ?? []
 }
@@ -16,7 +17,9 @@ function Row({ title, items, href }: any) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{items.map((p: any) => <ProductCard key={p.id} p={p} />)}</div></section>)
 }
 export default async function Home() {
-  const { data: sections } = await supabase.from('live_sections').select('*')
+  const { data: sections } = hasSupabaseConfig
+    ? await supabase.from('live_sections').select('*')
+    : { data: null }
   const [na, bs, tr] = await Promise.all([row('is_new_arrival'), row('is_best_seller'), row('is_trending')])
   const hasHero = sections?.some(s => s.type === 'hero')
   return (<main>
